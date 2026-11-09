@@ -642,6 +642,17 @@
     background: var(--tile); color: var(--ink-2); padding: 2px 5px; border-radius: var(--r-chip);
   }
 
+  /* a nota de condição é o primeiro dado que o comprador de usado procura,
+     então ganha cor e peso próprios dentro da linha de atributos */
+  .attr.nota { border: 1px solid; font-family: var(--text); font-size: 11.5px; padding: 1px 6px; }
+  .attr.nota b { font-family: var(--mono); font-weight: 500; font-size: 10.5px; }
+  .attr.nota.n10 { color: var(--ok); background: var(--ok-bg); border-color: #AED3BF; }
+  .attr.nota.n89 { color: #1F4680; background: var(--info-bg); border-color: #B4C6E6; }
+  .attr.nota.n67 { color: var(--wait); background: var(--wait-bg); border-color: #DCC18A; }
+  .attr.nota.n15 { color: var(--red-dark); background: #F7E3E3; border-color: #E6B9B9; }
+
+  .faixasub { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); margin-left: 4px; }
+
   .price {
     font-family: var(--sans); font-weight: 700; font-size: 19px;
     font-variant-numeric: tabular-nums; letter-spacing: -0.01em;
@@ -1045,18 +1056,6 @@
       <circle cx="47" cy="30" r="1.6" fill="currentColor"/>
       <path d="M18 40v6M36 40v6M15 46h8M33 46h8"/>
     </g>
-    <g id="s-municao" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
-      <path d="M24 55V33h16v22z"/>
-      <path d="M24 33c0-7 3-13 8-17 5 4 8 10 8 17"/>
-      <path d="M24 48h16"/>
-      <path d="M14 55V38c0-5 2-9 5-12M50 55V38c0-5-2-9-5-12" opacity=".45"/>
-    </g>
-    <g id="s-insumo" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
-      <path d="M26 10h12v8H26z"/>
-      <path d="M20 18h24v32a6 6 0 0 1-6 6H26a6 6 0 0 1-6-6z"/>
-      <path d="M20 32h24"/>
-      <path d="M26 42h12"/>
-    </g>
     <g id="s-pcp" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
       <path d="M5 22h8v11H5z"/>
       <path d="M13 24h45v7H13z"/>
@@ -1264,7 +1263,7 @@
 
     <div class="headsearch hidden" id="headsearch">
       <form class="sfield" id="form-head">
-        <input id="q-head" type="search" placeholder="Buscar arma, calibre, óptica, insumo…" aria-label="Buscar no catálogo">
+        <input id="q-head" type="search" placeholder="Buscar arma, calibre, óptica, acessório…" aria-label="Buscar no catálogo">
         <button type="submit" aria-label="Buscar">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
         </button>
@@ -1317,7 +1316,7 @@
       <p class="sub">Vendedores com CR validado, série conferida e o seu dinheiro retido até a entrega ser confirmada.</p>
       <div class="herosearch">
         <form class="sfield" id="form-hero">
-          <input id="q-hero" type="search" placeholder="O que você procura? Ex.: 9mm, red dot, pólvora, T4" aria-label="Buscar no catálogo">
+          <input id="q-hero" type="search" placeholder="O que você procura? Ex.: 9mm, red dot, coldre, T4" aria-label="Buscar no catálogo">
           <button type="submit" aria-label="Buscar">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5 21 21"/></svg>
           </button>
@@ -1392,7 +1391,6 @@
         <div class="fgroup">
           <h3>Vendedor</h3>
           <label class="opt"><input type="checkbox" id="f-verif"><span class="lbl">Somente verificados</span></label>
-          <label class="opt"><input type="checkbox" id="f-pronta"><span class="lbl">Pronta entrega</span></label>
         </div>
       </aside>
 
@@ -1406,6 +1404,7 @@
             <option value="menor">Menor preço</option>
             <option value="maior">Maior preço</option>
             <option value="recente">Mais recentes</option>
+            <option value="estado">Melhor estado</option>
             <option value="perto">Mais perto de mim</option>
           </select>
         </div>
@@ -1556,58 +1555,63 @@
     { id: "armas",       rotulo: "Armas",       glifo: "s-pistola" },
     { id: "supressores", rotulo: "Supressores", glifo: "s-supressor" },
     { id: "opticas",     rotulo: "Ópticas",     glifo: "s-optica" },
-    { id: "municao",     rotulo: "Munição",     glifo: "s-municao" },
-    { id: "insumos",     rotulo: "Insumos",     glifo: "s-insumo" },
     { id: "pcp",         rotulo: "PCP",         glifo: "s-pcp" },
     { id: "acessorios",  rotulo: "Acessórios",  glifo: "s-acessorio" }
   ];
 
-  // d = dias desde a publicação (para "mais recentes")
-  // i = foto do produto; g = glifo usado quando não há foto
+  // condição em escala de 1 a 10: no mercado de usado é o primeiro filtro
+  // que o comprador aplica, então vira dado de primeira classe no anúncio
+  var FAIXAS = [
+    { id: "f10", rot: "Novo", sub: "10/10", min: 10, max: 10 },
+    { id: "f89", rot: "Excelente", sub: "8 a 9", min: 8, max: 9 },
+    { id: "f67", rot: "Bom", sub: "6 a 7", min: 6, max: 7 },
+    { id: "f15", rot: "Com marcas de uso", sub: "até 5", min: 1, max: 5 }
+  ];
+
+  function faixaDe(nota) {
+    for (var i = 0; i < FAIXAS.length; i++) if (nota >= FAIXAS[i].min && nota <= FAIXAS[i].max) return FAIXAS[i];
+    return FAIXAS[FAIXAS.length - 1];
+  }
+
+  function classeNota(nota) {
+    return nota >= 10 ? "n10" : nota >= 8 ? "n89" : nota >= 6 ? "n67" : "n15";
+  }
+
+  // d = dias desde a publicação; i = foto; nota = condição de 1 a 10
   var produtos = [
-    { n: "Taurus TX22 Competition 16 tiros", i: "tx22comp", c: "armas", g: "s-pistola", m: "Taurus", cal: ".22LR", cond: "Usada", p: 5900, v: "eduardo", d: 2,  serie: true, pronta: true,  trilhas: ["ipsc"], boost: true },
-    { n: "Taurus TX9 Full Size", i: "tx9", c: "armas", g: "s-pistola", m: "Taurus", cal: "9x19mm", cond: "Nova", p: 7650, v: "bandeirantes", d: 5, serie: true, pronta: true, trilhas: ["ipsc"] },
-    { n: "Taurus GX4 Carry T.O.R.O.", i: "gx4", c: "armas", g: "s-pistola", m: "Taurus", cal: ".380ACP", cond: "Nova", p: 6100, v: "lucas", d: 9, serie: true, pronta: false, trilhas: [] },
-    { n: "Taurus G3 T.O.R.O.", i: "g3toro", c: "armas", g: "s-pistola", m: "Taurus", cal: "9x19mm", cond: "Usada", p: 5450, v: "marina", d: 12, serie: true, pronta: true, trilhas: [] },
-    { n: "Taurus G2C", i: "g2c", c: "armas", g: "s-pistola", m: "Taurus", cal: "9x19mm", cond: "Usada", p: 4650, v: "thiago", d: 1, serie: true, pronta: false, trilhas: [] },
-    { n: "S&W Bodyguard 2.0", i: "bodyguard", c: "armas", g: "s-pistola", m: "Smith & Wesson", cal: ".380ACP", cond: "Nova", p: 11990, v: "bandeirantes", d: 7, serie: true, pronta: true, trilhas: [] },
-    { n: "DFA Arex Delta M Optics Ready", i: "arex", c: "armas", g: "s-pistola", m: "Arex", cal: "9x19mm", cond: "Usada", p: 4500, v: "rodrigo", d: 15, serie: true, pronta: true, trilhas: ["ipsc"] },
-    { n: "Taurus TX38 Compacta", i: "tx38", c: "armas", g: "s-pistola", m: "Taurus", cal: ".38TPC", cond: "Nova", p: 6800, v: "paranaprecisao", d: 4, serie: true, pronta: false, trilhas: [] },
-    { n: "Glock G25 Gen3", i: "g25", c: "armas", g: "s-pistola", m: "Glock", cal: ".380ACP", cond: "Usada", p: 7200, v: "bruno", d: 20, serie: true, pronta: true, trilhas: [] },
-    { n: "Revólver Taurus RT 838 cano 4\"", i: "rt838", c: "armas", g: "s-pistola", m: "Taurus", cal: ".38SPL", cond: "Usada", p: 3900, v: "armariamg", d: 26, serie: true, pronta: false, trilhas: [] },
+    { n: "Taurus TX22 Competition 16 tiros", i: "tx22comp", c: "armas", g: "s-pistola", m: "Taurus", cal: ".22LR", cond: "Usada", nota: 8, p: 5900, v: "eduardo", d: 2, serie: true, trilhas: ["ipsc"], boost: true },
+    { n: "Taurus TX9 Full Size", i: "tx9", c: "armas", g: "s-pistola", m: "Taurus", cal: "9x19mm", cond: "Nova", nota: 10, p: 7650, v: "bandeirantes", d: 5, serie: true, trilhas: ["ipsc"] },
+    { n: "Taurus GX4 Carry T.O.R.O.", i: "gx4", c: "armas", g: "s-pistola", m: "Taurus", cal: ".380ACP", cond: "Nova", nota: 10, p: 6100, v: "lucas", d: 9, serie: true, trilhas: [] },
+    { n: "Taurus G3 T.O.R.O.", i: "g3toro", c: "armas", g: "s-pistola", m: "Taurus", cal: "9x19mm", cond: "Usada", nota: 7, p: 5450, v: "armariamg", d: 12, serie: true, trilhas: [] },
+    { n: "Taurus G2C", i: "g2c", c: "armas", g: "s-pistola", m: "Taurus", cal: "9x19mm", cond: "Usada", nota: 6, p: 4650, v: "thiago", d: 1, serie: true, trilhas: [] },
+    { n: "S&W Bodyguard 2.0", i: "bodyguard", c: "armas", g: "s-pistola", m: "Smith & Wesson", cal: ".380ACP", cond: "Nova", nota: 10, p: 11990, v: "nordeste", d: 7, serie: true, trilhas: [] },
+    { n: "DFA Arex Delta M Optics Ready", i: "arex", c: "armas", g: "s-pistola", m: "Arex", cal: "9x19mm", cond: "Usada", nota: 8, p: 4500, v: "rodrigo", d: 15, serie: true, trilhas: ["ipsc"] },
+    { n: "Taurus TX38 Compacta", i: "tx38", c: "armas", g: "s-pistola", m: "Taurus", cal: ".38TPC", cond: "Nova", nota: 10, p: 6800, v: "paranaprecisao", d: 4, serie: true, trilhas: [] },
+    { n: "Glock G25 Gen3", i: "g25", c: "armas", g: "s-pistola", m: "Glock", cal: ".380ACP", cond: "Usada", nota: 9, p: 7200, v: "bruno", d: 20, serie: true, trilhas: [] },
+    { n: "Revólver Taurus RT 838 cano 4\"", i: "rt838", c: "armas", g: "s-pistola", m: "Taurus", cal: ".38SPL", cond: "Usada", nota: 5, p: 3900, v: "armariamg", d: 26, serie: true, trilhas: [] },
 
-    { n: "Taurus T4 MLOK 5.56 11.5\"", i: "t4mlok", c: "armas", g: "s-fuzil", m: "Taurus", cal: "5.56x45mm", cond: "Nova", p: 12500, v: "bandeirantes", d: 3, serie: true, pronta: true, trilhas: ["ipsc"], boost: true },
-    { n: "Taurus T4 .300BLK 9\"", i: "t4blk", c: "armas", g: "s-fuzil", m: "Taurus", cal: ".300BLK", cond: "Usada", p: 13990, v: "rodrigo", d: 11, serie: true, pronta: false, trilhas: [] },
-    { n: "Taurus RPC 4.5\"", i: "rpc", c: "armas", g: "s-fuzil", m: "Taurus", cal: "9x19mm", cond: "Nova", p: 13500, v: "paranaprecisao", d: 6, serie: true, pronta: true, trilhas: ["ipsc"] },
-    { n: "Taurus Expedition 18\"", i: "exped", c: "armas", g: "s-fuzil", m: "Taurus", cal: ".223REM", cond: "Usada", p: 11500, v: "taticasul", d: 18, serie: true, pronta: true, trilhas: [] },
-    { n: "Carabina Puma cano redondo 20\" inox", i: "puma", c: "armas", g: "s-fuzil", m: "CBC", cal: ".38SPL", cond: "Usada", p: 4200, v: "andre", d: 30, serie: true, pronta: false, trilhas: [] },
+    { n: "Taurus T4 MLOK 5.56 11.5\"", i: "t4mlok", c: "armas", g: "s-fuzil", m: "Taurus", cal: "5.56x45mm", cond: "Nova", nota: 10, p: 12500, v: "bandeirantes", d: 3, serie: true, trilhas: ["ipsc"], boost: true },
+    { n: "Taurus T4 .300BLK 9\"", i: "t4blk", c: "armas", g: "s-fuzil", m: "Taurus", cal: ".300BLK", cond: "Usada", nota: 9, p: 13990, v: "rodrigo", d: 11, serie: true, trilhas: [] },
+    { n: "Taurus RPC 4.5\"", i: "rpc", c: "armas", g: "s-fuzil", m: "Taurus", cal: "9x19mm", cond: "Nova", nota: 10, p: 13500, v: "paranaprecisao", d: 6, serie: true, trilhas: ["ipsc"] },
+    { n: "Taurus Expedition 18\"", i: "exped", c: "armas", g: "s-fuzil", m: "Taurus", cal: ".223REM", cond: "Usada", nota: 8, p: 11500, v: "taticasul", d: 18, serie: true, trilhas: [] },
+    { n: "Carabina Puma cano redondo 20\" inox", i: "puma", c: "armas", g: "s-fuzil", m: "CBC", cal: ".38SPL", cond: "Usada", nota: 6, p: 4200, v: "andre", d: 30, serie: true, trilhas: [] },
 
-    { n: "Taurus Supressor M183", i: "m183", c: "supressores", g: "s-supressor", m: "Taurus", cal: "9x19mm", cond: "Novo", p: 6990, v: "paranaprecisao", d: 8, serie: true, pronta: true, trilhas: [] },
-    { n: "DC Supressor MultiCalibre .30 LI", i: "dc30", c: "supressores", g: "s-supressor", m: "DC Gun Parts", cal: "7.62x51mm", cond: "Usado", p: 7191, v: "eduardo", d: 14, serie: true, pronta: false, trilhas: [] },
-    { n: "Taurus Supressor ST22", i: "st22", c: "supressores", g: "s-supressor", m: "Taurus", cal: ".22LR", cond: "Novo", p: 6500, v: "taticasul", d: 22, serie: true, pronta: true, trilhas: [] },
+    { n: "Taurus Supressor M183", i: "m183", c: "supressores", g: "s-supressor", m: "Taurus", cal: "9x19mm", cond: "Novo", nota: 10, p: 6990, v: "nordeste", d: 8, serie: true, trilhas: [] },
+    { n: "DC Supressor MultiCalibre .30 LI", i: "dc30", c: "supressores", g: "s-supressor", m: "DC Gun Parts", cal: "7.62x51mm", cond: "Usado", nota: 8, p: 7191, v: "eduardo", d: 14, serie: true, trilhas: [] },
+    { n: "Taurus Supressor ST22", i: "st22", c: "supressores", g: "s-supressor", m: "Taurus", cal: ".22LR", cond: "Novo", nota: 10, p: 6500, v: "taticasul", d: 22, serie: true, trilhas: [] },
 
-    { n: "Red Dot Holosun HS507C", i: "hs507c", c: "opticas", g: "s-optica", m: "Holosun", cal: "—", cond: "Novo", p: 4650, v: "marina", d: 2, serie: false, pronta: true, trilhas: ["ipsc"] },
-    { n: "Red Dot Vortex Venom", i: "venom", c: "opticas", g: "s-optica", m: "Vortex", cal: "—", cond: "Usado", p: 3150, v: "patricia", d: 10, serie: false, pronta: true, trilhas: ["ipsc"] },
-    { n: "Red Dot Taurus 1x20x28", i: "taurusrd", c: "opticas", g: "s-optica", m: "Taurus", cal: "—", cond: "Novo", p: 550, v: "felipe", d: 16, serie: false, pronta: true, trilhas: [] },
-    { n: "Combo Red Dot HS510C + Magnificador HM3X", i: "combo510", c: "opticas", g: "s-optica", m: "Holosun", cal: "—", cond: "Novo", p: 8900, v: "taticasul", d: 5, serie: false, pronta: false, trilhas: [], boost: true },
+    { n: "Red Dot Holosun HS507C", i: "hs507c", c: "opticas", g: "s-optica", m: "Holosun", cal: "—", cond: "Novo", nota: 10, p: 4650, v: "marina", d: 2, serie: false, trilhas: ["ipsc"] },
+    { n: "Red Dot Vortex Venom", i: "venom", c: "opticas", g: "s-optica", m: "Vortex", cal: "—", cond: "Usado", nota: 7, p: 3150, v: "patricia", d: 10, serie: false, trilhas: ["ipsc"] },
+    { n: "Red Dot Taurus 1x20x28", i: "taurusrd", c: "opticas", g: "s-optica", m: "Taurus", cal: "—", cond: "Novo", nota: 10, p: 550, v: "felipe", d: 16, serie: false, trilhas: [] },
+    { n: "Combo Red Dot HS510C + Magnificador HM3X", i: "combo510", c: "opticas", g: "s-optica", m: "Holosun", cal: "—", cond: "Novo", nota: 10, p: 8900, v: "centrooeste", d: 5, serie: false, trilhas: [], boost: true },
 
-    { n: "Munição CBC 9mm Luger ETOG 124gr — caixa 50", i: "mun9", c: "municao", g: "s-municao", m: "CBC", cal: "9x19mm", cond: "Nova", p: 290, v: "centrooeste", d: 1, serie: false, pronta: true, trilhas: [] },
-    { n: "Munição CBC .38 SPL CHOG 158gr — caixa 10", i: "mun38", c: "municao", g: "s-municao", m: "CBC", cal: ".38SPL", cond: "Nova", p: 95, v: "centrooeste", d: 4, serie: false, pronta: true, trilhas: [] },
-    { n: "Munição CBC .380 Auto ETOG 95gr — caixa 50", i: "mun380", c: "municao", g: "s-municao", m: "CBC", cal: ".380ACP", cond: "Nova", p: 240, v: "nordeste", d: 7, serie: false, pronta: true, trilhas: [] },
-    { n: "Munição CBC .223 Rem EXPT 55gr — caixa 50", i: "mun223", c: "municao", g: "s-municao", m: "CBC", cal: ".223REM", cond: "Nova", p: 520, v: "centrooeste", d: 13, serie: false, pronta: false, trilhas: [] },
+    { n: "Carabina PCP Sumatra 500cc", i: "pcpsumatra", c: "pcp", g: "s-pcp", m: "Sumatra", cal: "5.5mm", cond: "Usada", nota: 7, p: 4800, v: "juliana", d: 5, serie: false, trilhas: ["pcp"] },
+    { n: "Carabina PCP Hatsan Flash Pup 5.5mm", i: "pcphatsan", c: "pcp", g: "s-pcp", m: "Hatsan", cal: "5.5mm", cond: "Nova", nota: 10, p: 5600, v: "marcelo", d: 12, serie: false, trilhas: ["pcp"] },
 
-    { n: "Pólvora CBC 219 para recarga", i: "polvora219", c: "insumos", g: "s-insumo", m: "CBC", cal: "—", cond: "Novo", p: 480, v: "nordeste", d: 3, serie: false, pronta: true, trilhas: [] },
-    { n: "Espoleta CBC Small Pistol Pro Training", i: "espoleta", c: "insumos", g: "s-insumo", m: "CBC", cal: "—", cond: "Novo", p: 390, v: "amazonia", d: 6, serie: false, pronta: true, trilhas: [] },
-    { n: "Pólvora CBC 217 queima intermediária", i: "polvora217", c: "insumos", g: "s-insumo", m: "CBC", cal: "—", cond: "Novo", p: 455, v: "nordeste", d: 9, serie: false, pronta: true, trilhas: [] },
-    { n: "Projétil CBC .223 Rem ETPT 55gr — 50un", i: "projetil", c: "insumos", g: "s-insumo", m: "CBC", cal: ".223REM", cond: "Novo", p: 420, v: "amazonia", d: 17, serie: false, pronta: false, trilhas: [] },
-
-    { n: "Carabina PCP Sumatra 500cc", i: "pcpsumatra", c: "pcp", g: "s-pcp", m: "Sumatra", cal: "5.5mm", cond: "Usada", p: 4800, v: "juliana", d: 5, serie: false, pronta: true, trilhas: ["pcp"] },
-    { n: "Carabina PCP Hatsan Flash Pup 5.5mm", i: "pcphatsan", c: "pcp", g: "s-pcp", m: "Hatsan", cal: "5.5mm", cond: "Nova", p: 5600, v: "marcelo", d: 12, serie: false, pronta: true, trilhas: ["pcp"] },
-
-    { n: "Coldre Kydex Magnum IWB", i: "coldre", c: "acessorios", g: "s-acessorio", m: "Magnum", cal: "—", cond: "Novo", p: 290, v: "lucas", d: 2, serie: false, pronta: true, trilhas: ["ipsc"] },
-    { n: "Abafador Aurok Whisper", i: "abaf", c: "acessorios", g: "s-acessorio", m: "Aurok", cal: "—", cond: "Novo", p: 450, v: "armariamg", d: 8, serie: false, pronta: true, trilhas: [] },
-    { n: "Kit de Limpeza Richter", i: "kit", c: "acessorios", g: "s-acessorio", m: "Richter", cal: "—", cond: "Novo", p: 150, v: "amazonia", d: 21, serie: false, pronta: true, trilhas: [] },
-    { n: "Carregadores Pistolas Glock 9mm", i: "carregglock", c: "acessorios", g: "s-acessorio", m: "Glock", cal: "9x19mm", cond: "Novo", p: 450, v: "armariamg", d: 11, serie: false, pronta: true, trilhas: ["ipsc"] }
+    { n: "Coldre Kydex Magnum IWB", i: "coldre", c: "acessorios", g: "s-acessorio", m: "Magnum", cal: "—", cond: "Novo", nota: 10, p: 290, v: "thiago", d: 2, serie: false, trilhas: ["ipsc"] },
+    { n: "Abafador Aurok Whisper", i: "abaf", c: "acessorios", g: "s-acessorio", m: "Aurok", cal: "—", cond: "Novo", nota: 10, p: 450, v: "amazonia", d: 8, serie: false, trilhas: [] },
+    { n: "Kit de Limpeza Richter", i: "kit", c: "acessorios", g: "s-acessorio", m: "Richter", cal: "—", cond: "Novo", nota: 10, p: 150, v: "amazonia", d: 21, serie: false, trilhas: [] },
+    { n: "Carregadores Pistolas Glock 9mm", i: "carregglock", c: "acessorios", g: "s-acessorio", m: "Glock", cal: "9x19mm", cond: "Novo", nota: 10, p: 450, v: "centrooeste", d: 11, serie: false, trilhas: ["ipsc"] }
   ];
 
   /* ---------------- utilidades ---------------- */
@@ -1615,6 +1619,7 @@
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var el = function (t, cls) { var e = document.createElement(t); if (cls) e.className = cls; return e; };
   var brl = function (v) { return "R$ " + v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  var rotuloFaixa = function (id) { for (var i = 0; i < FAIXAS.length; i++) if (FAIXAS[i].id === id) return "Condição: " + FAIXAS[i].rot; return id; };
   var rotuloCat = function (id) { for (var i = 0; i < CATS.length; i++) if (CATS[i].id === id) return CATS[i].rotulo; return id; };
 
   var ICON_SHIELD = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 5 6v6c0 4.4 3 8 7 9 4-1 7-4.6 7-9V6Z"/><path d="m9 12 2 2 4-4"/></svg>';
@@ -1631,13 +1636,11 @@
     var flags = "";
     if (p.boost) flags += '<span class="flag boost">Destaque</span>';
     if (p.serie) flags += '<span class="flag serie">Série verificada</span>';
-    else flags += '<span class="flag ' + (/^Nov/.test(p.cond) ? "nova" : "usada") + '">' + p.cond + "</span>";
 
-    var attrs = "";
-    if (p.serie) attrs += '<span class="attr">' + p.cond + "</span>";
+    var attrs = '<span class="attr nota ' + classeNota(p.nota) + '">' +
+      p.cond + ' <b>' + p.nota + '/10</b></span>';
     if (p.cal !== "—") attrs += '<span class="attr">' + p.cal + "</span>";
     attrs += '<span class="attr">' + p.m + "</span>";
-    if (p.pronta) attrs += '<span class="attr">Pronta entrega</span>';
 
     var midia = p.i
       ? '<img src="img/' + p.i + '.jpg" alt="' + p.n.replace(/"/g, "&quot;") + '" loading="lazy" decoding="async">'
@@ -1700,12 +1703,9 @@
       f: function (p) { return vendedores[p.v].verificado; },
       s: function (a, b) { return vendedores[b.v].negocios - vendedores[a.v].negocios; }, mix: true },
     { t: "Armas", h: null, f: function (p) { return p.c === "armas"; }, s: porRecencia },
+    { t: "Nunca usados", h: "Condição 10/10", f: function (p) { return p.nota === 10; }, s: porRecencia, mix: true },
     { t: "Para IPSC", h: "Seleção de quem compete", f: function (p) { return p.trilhas.indexOf("ipsc") >= 0; }, s: porRecencia, mix: true },
-    { t: "Pronta entrega", h: "Vendedores com menor prazo de documentação",
-      f: function (p) { return p.pronta && vendedores[p.v].prazo <= 4; },
-      s: function (a, b) { return vendedores[a.v].prazo - vendedores[b.v].prazo; }, mix: true },
     { t: "Ópticas e red dots", h: null, f: function (p) { return p.c === "opticas"; }, s: porRecencia },
-    { t: "Insumos e recarga", h: null, f: function (p) { return p.c === "insumos" || p.c === "municao"; }, s: porRecencia, mix: true },
     { t: "PCP", h: null, f: function (p) { return p.c === "pcp"; }, s: porRecencia }
   ];
 
@@ -1769,7 +1769,7 @@
 
   /* ---------------- busca ---------------- */
 
-  var estado = { q: "", cat: [], cal: [], marca: [], cond: [], uf: [], verif: false, pronta: false, min: null, max: null, sort: "relev", trilha: null, vend: null };
+  var estado = { q: "", cat: [], cal: [], marca: [], cond: [], uf: [], verif: false, min: null, max: null, sort: "relev", trilha: null, vend: null };
 
   function valoresUnicos(chave) {
     var m = {};
@@ -1802,13 +1802,35 @@
     });
   }
 
+
+  function grupoFaixa(host) {
+    host.innerHTML = "";
+    FAIXAS.forEach(function (f) {
+      var qt = produtos.filter(function (p) { return p.nota >= f.min && p.nota <= f.max; }).length;
+      if (!qt) return;
+      var lab = el("label", "opt");
+      var inp = el("input"); inp.type = "checkbox"; inp.value = f.id;
+      var lbl = el("span", "lbl"); lbl.innerHTML = f.rot + ' <span class="faixasub">' + f.sub + "</span>";
+      var n = el("span", "qt"); n.textContent = qt;
+      lab.appendChild(inp); lab.appendChild(lbl); lab.appendChild(n);
+      inp.addEventListener("change", function () {
+        var arr = estado.cond, i = arr.indexOf(f.id);
+        if (inp.checked && i < 0) arr.push(f.id);
+        if (!inp.checked && i >= 0) arr.splice(i, 1);
+        estado.trilha = null;
+        render();
+      });
+      host.appendChild(lab);
+    });
+  }
+
   function montarFiltros() {
     grupoCheck($("#f-cat"), CATS.map(function (c) {
       return { v: c.id, n: produtos.filter(function (p) { return p.c === c.id; }).length };
     }), "cat", rotuloCat);
     grupoCheck($("#f-cal"), valoresUnicos("cal"), "cal");
     grupoCheck($("#f-marca"), valoresUnicos("m"), "marca");
-    grupoCheck($("#f-cond"), valoresUnicos("cond"), "cond");
+    grupoFaixa($("#f-cond"));
     grupoCheck($("#f-uf"), valoresUnicos("uf"), "uf");
   }
 
@@ -1816,8 +1838,7 @@
     if (!q) return true;
     // sinônimos do domínio — é o dicionário que faz a busca parecer inteligente
     var sin = { "9mm": "9x19", "9 mm": "9x19", "380": ".380", "38": ".38", "556": "5.56", "223": ".223", "22": ".22",
-                "red dot": "red dot holosun vortex optica", "ponto vermelho": "red dot", "polvora": "pólvora",
-                "municao": "munição", "oculos": "óculos", "otica": "óptica", "supressor": "supressor silenciador" };
+                "red dot": "red dot holosun vortex optica", "ponto vermelho": "red dot", "oculos": "óculos", "otica": "óptica", "supressor": "supressor silenciador" };
     var norm = function (s) { return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); };
     var alvo = norm([p.n, p.m, p.cal, p.c, rotuloCat(p.c), vendedores[p.v].cidade, vendedores[p.v].uf].join(" "));
     var termo = norm(q);
@@ -1834,10 +1855,9 @@
       if (estado.cat.length && estado.cat.indexOf(p.c) < 0) return false;
       if (estado.cal.length && estado.cal.indexOf(p.cal) < 0) return false;
       if (estado.marca.length && estado.marca.indexOf(p.m) < 0) return false;
-      if (estado.cond.length && estado.cond.indexOf(p.cond) < 0) return false;
+      if (estado.cond.length && estado.cond.indexOf(faixaDe(p.nota).id) < 0) return false;
       if (estado.uf.length && estado.uf.indexOf(v.uf) < 0) return false;
       if (estado.verif && !v.verificado) return false;
-      if (estado.pronta && !p.pronta) return false;
       if (estado.min !== null && p.p < estado.min) return false;
       if (estado.max !== null && p.p > estado.max) return false;
       return true;
@@ -1849,6 +1869,7 @@
     if (estado.sort === "menor") c.sort(function (a, b) { return a.p - b.p; });
     else if (estado.sort === "maior") c.sort(function (a, b) { return b.p - a.p; });
     else if (estado.sort === "recente") c.sort(function (a, b) { return a.d - b.d; });
+    else if (estado.sort === "estado") c.sort(function (a, b) { return b.nota - a.nota || a.d - b.d; });
     else if (estado.sort === "perto") c.sort(function (a, b) { return (vendedores[a.v].uf === "PR" ? 0 : 1) - (vendedores[b.v].uf === "PR" ? 0 : 1); });
     else c.sort(function (a, b) { return (b.boost ? 1 : 0) - (a.boost ? 1 : 0) || a.d - b.d; });
     return c;
@@ -1871,14 +1892,13 @@
     if (estado.trilha) add(estado.trilha.t, function () { estado.trilha = null; });
     ["cat", "cal", "marca", "cond", "uf"].forEach(function (campo) {
       estado[campo].slice().forEach(function (val) {
-        add(campo === "cat" ? rotuloCat(val) : val, function () {
+        add(campo === "cat" ? rotuloCat(val) : campo === "cond" ? rotuloFaixa(val) : val, function () {
           estado[campo].splice(estado[campo].indexOf(val), 1);
           sincronizarCheckboxes();
         });
       });
     });
     if (estado.verif) add("Somente verificados", function () { estado.verif = false; $("#f-verif").checked = false; });
-    if (estado.pronta) add("Pronta entrega", function () { estado.pronta = false; $("#f-pronta").checked = false; });
   }
 
   function sincronizarCheckboxes() {
@@ -2451,9 +2471,8 @@
     estado.vend = opts.vend || null;
     estado.cat = opts.cat ? opts.cat.slice() : [];
     estado.cal = []; estado.marca = []; estado.cond = []; estado.uf = [];
-    estado.verif = false; estado.pronta = false; estado.min = null; estado.max = null;
+    estado.verif = false; estado.min = null; estado.max = null;
     $("#f-verif").checked = false;
-    $("#f-pronta").checked = false;
     $("#f-min").value = ""; $("#f-max").value = "";
     $("#q-head").value = estado.q;
     sincronizarCheckboxes();
@@ -2485,7 +2504,6 @@
     }
 
     $("#f-verif").addEventListener("change", function (e) { estado.verif = e.target.checked; render(); });
-    $("#f-pronta").addEventListener("change", function (e) { estado.pronta = e.target.checked; render(); });
     $("#f-min").addEventListener("input", function (e) { estado.min = e.target.value === "" ? null : +e.target.value; render(); });
     $("#f-max").addEventListener("input", function (e) { estado.max = e.target.value === "" ? null : +e.target.value; render(); });
     $("#sort").addEventListener("change", function (e) { estado.sort = e.target.value; render(); });
@@ -2503,8 +2521,8 @@
 
     $("#clearall").addEventListener("click", function () {
       estado.cat = []; estado.cal = []; estado.marca = []; estado.cond = []; estado.uf = [];
-      estado.verif = false; estado.pronta = false; estado.min = null; estado.max = null; estado.q = ""; estado.trilha = null; estado.vend = null;
-      $("#f-verif").checked = false; $("#f-pronta").checked = false;
+      estado.verif = false; estado.min = null; estado.max = null; estado.q = ""; estado.trilha = null; estado.vend = null;
+      $("#f-verif").checked = false;
       $("#f-min").value = ""; $("#f-max").value = ""; $("#q-head").value = "";
       sincronizarCheckboxes();
       render();
