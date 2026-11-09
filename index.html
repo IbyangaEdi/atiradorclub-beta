@@ -179,25 +179,30 @@
   }
 
   .nav { background: var(--graphite); border-top: 1px solid #332F2F; }
-  .nav .wrap { display: flex; align-items: center; gap: 4px; height: 48px; }
 
+  /* a barra só carrega categorias, então pode centralizar de verdade */
+  .nav .wrap { display: flex; justify-content: center; align-items: stretch; gap: 2px; padding-top: 6px; padding-bottom: 6px; }
+
+  /* ícone com rótulo: oito categorias em ícone puro o usuário erra */
   .nav a {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    min-width: 82px; padding: 9px 10px 8px;
     font-family: var(--sans);
     font-weight: 500;
-    font-size: 13px;
-    letter-spacing: 0.06em;
+    font-size: 10.5px;
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     color: var(--on-dark-2);
-    padding: 8px 13px;
+    border-radius: var(--r-panel);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
   }
 
-  .nav a { border-radius: var(--r-btn); }
-  .nav a:hover { color: var(--on-dark); }
+  .nav a svg { width: 27px; height: 27px; display: block; }
+  .nav a:hover { color: var(--on-dark); background: #2B2929; }
 
-  /* seção selecionada fica vermelha: texto e barra */
-  .nav a.on { color: #EC6B6B; box-shadow: inset 0 -2px 0 #EC6B6B; border-radius: 0; }
-
-  .nav .spacer { margin-left: auto; }
+  /* seção selecionada fica vermelha: ícone, rótulo e barra */
+  .nav a.on { color: #EC6B6B; background: none; border-bottom-color: #EC6B6B; border-radius: var(--r-panel) var(--r-panel) 0 0; }
 
   .btn-anuncie {
     font-family: var(--sans);
@@ -948,6 +953,8 @@
   .travado svg { flex: none; margin-top: 1px; }
 
   /* cabeçalho do Paiol dentro da busca */
+  .paiolhead[hidden] { display: none; }
+
   .paiolhead {
     display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
     background: var(--card); border: 2px solid var(--line-soft); border-radius: var(--r-card);
@@ -1072,6 +1079,12 @@
       <path d="M28 17h12v7H28z"/>
       <path d="M14 33h24a5 5 0 0 1 0 10H14z"/>
       <path d="M22 43l-2 12h8l1-12"/>
+    </g>
+    <g id="s-paiol" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
+      <path d="M6 27 32 9l26 18"/>
+      <path d="M12 27v28h40V27"/>
+      <path d="M25 55V40h14v15"/>
+      <path d="M32 31v4"/>
     </g>
     <g id="s-acessorio" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" stroke-linecap="round">
       <path d="M21 14h18l4 29a11 11 0 0 1-11 12h-5a11 11 0 0 1-11-12z"/>
@@ -1275,6 +1288,7 @@
     </div>
 
     <div class="headtools">
+      <a href="#" class="btn-anuncie">Anuncie</a>
       <button class="ibtn" aria-label="Favoritos">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.4A4.1 4.1 0 0 1 12 8a4.1 4.1 0 0 1 7 2.6c0 5-7 9.4-7 9.4Z"/></svg>
       </button>
@@ -1307,18 +1321,7 @@
 </header>
 
 <nav class="nav">
-  <div class="wrap">
-    <a href="#" data-cat="armas">Armas</a>
-    <a href="#" data-cat="supressores">Supressores</a>
-    <a href="#" data-cat="opticas">Ópticas</a>
-    <a href="#" data-cat="municao">Munição</a>
-    <a href="#" data-cat="insumos">Insumos</a>
-    <a href="#" data-cat="pcp">PCP</a>
-    <a href="#" data-cat="acessorios">Acessórios</a>
-    <a href="#" data-go="paiois">Paióis</a>
-    <span class="spacer"></span>
-    <a href="#" class="btn-anuncie">Anuncie</a>
-  </div>
+  <div class="wrap" id="navcats"></div>
 </nav>
 
 <!-- ======================= HOME ======================= -->
@@ -1723,6 +1726,22 @@
     { t: "PCP", h: null, f: function (p) { return p.c === "pcp"; }, s: porRecencia }
   ];
 
+  function montarNav() {
+    var host = $("#navcats");
+    host.innerHTML = "";
+    var itens = CATS.map(function (c) { return { rot: c.rotulo, glifo: c.glifo, cat: c.id }; });
+    itens.push({ rot: "Paióis", glifo: "s-paiol", go: "paiois" });
+
+    itens.forEach(function (it) {
+      var a = el("a");
+      a.href = "#";
+      if (it.cat) a.setAttribute("data-cat", it.cat); else a.setAttribute("data-go", it.go);
+      a.innerHTML = '<svg viewBox="0 0 64 64" aria-hidden="true"><use href="#' + it.glifo + '"/></svg>' +
+                    "<span>" + it.rot + "</span>";
+      host.appendChild(a);
+    });
+  }
+
   function montarHome() {
     var chips = $("#herochips");
     CATS.forEach(function (c) {
@@ -1904,7 +1923,7 @@
 
     $("#result-count").textContent = lista.length + (lista.length === 1 ? " anúncio" : " anúncios");
     $("#result-title").textContent =
-      estado.vend ? "Paiol de " + vendedores[estado.vend].nome
+      estado.vend ? (/^paiol/i.test(vendedores[estado.vend].nome) ? "" : "Paiol de ") + vendedores[estado.vend].nome
       : estado.q ? '"' + estado.q + '"'
       : estado.trilha ? estado.trilha.t
       : estado.cat.length === 1 ? rotuloCat(estado.cat[0])
@@ -2518,6 +2537,7 @@
     });
   }
 
+  montarNav();
   montarHome();
   montarFiltros();
   montarBarraUf();
