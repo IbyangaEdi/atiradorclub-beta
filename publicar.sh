@@ -48,7 +48,12 @@ git -c user.email=edval@berluc.com.br -c user.name="Edval Santana" \
 git push -q origin main
 echo "publicado — aguardando build do Pages"
 
-until [ "$(gh api repos/IbyangaEdi/atiradorclub-beta/pages --jq .status 2>/dev/null)" = "built" ]; do
-  sleep 5
+# esperar só por status=built engana: ele ainda reporta o build anterior.
+# o que vale é o build mais recente ser o do commit que acabou de subir.
+SHA=$(git rev-parse HEAD)
+API=repos/IbyangaEdi/atiradorclub-beta/pages/builds/latest
+until [ "$(gh api $API --jq .commit 2>/dev/null)" = "$SHA" ] \
+   && [ "$(gh api $API --jq .status 2>/dev/null)" = "built" ]; do
+  sleep 8
 done
-echo "no ar: https://atiradorclub.berluc.com.br"
+echo "no ar: https://atiradorclub.berluc.com.br (commit ${SHA:0:7})"
